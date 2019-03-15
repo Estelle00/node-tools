@@ -5,10 +5,10 @@ const request = require("request");
 const fs = require("fs");
 const chalk = require("chalk");
 const consola = require("consola");
+const {SOURCE, OUTPUT, MAX_SIZE} = require("./config/index");
 const fails = [];
 const failsInfo = [];
-const SOURCE = "source";
-const OUTPUT = "output";
+
 const files = glob.sync("*", {
   cwd: SOURCE
 });
@@ -53,8 +53,8 @@ function prefixer(filename, first) {
   const newImg = images(size, size)
     .fill(255, 255, 255)
     .draw(img, x, y);
-  if (size > 750) {
-    newImg.resize(750);
+  if (MAX_SIZE > 0 && size > MAX_SIZE) {
+    newImg.resize(MAX_SIZE);
   }
   const b = newImg.encode("jpg");
   const newFilename = path.parse(filename).name + ".jpg";
