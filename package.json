@@ -1,0 +1,14 @@
+{
+  "name": "node-tools",
+  "version": "1.0.0",
+  "description": "node 小工具",
+  "main": "index.js",
+  "repository": "https://github.com/Estelle00/node-tools",
+  "author": "Estelle00 <530908773@qq.com>",
+  "license": "MIT",
+  "dependencies": {
+    "eslint": "^5.15.1",
+    "eslint-config-prettier": "^4.1.0",
+    "prettier": "^1.16.4"
+  }
+}
