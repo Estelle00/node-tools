@@ -1,5 +1,5 @@
 module.exports = {
   SOURCE: "source",
   OUTPUT: "output",
-  MAX_SIZE: 750
+  MAX_SIZE: 1080
 };

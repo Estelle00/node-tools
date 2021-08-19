@@ -9,9 +9,10 @@ const {SOURCE, OUTPUT, MAX_SIZE} = require("./config/index");
 const fails = [];
 const failsInfo = [];
 
-const files = glob.sync("*", {
+const files = glob.sync("**/**.**", {
   cwd: SOURCE
 });
+console.log(files);
 const len = files.length;
 function run() {
   console.log();
@@ -40,25 +41,26 @@ function prefixer(filename, first) {
   const img = images(filePath); //Load image from file
   let w = img.width();
   let h = img.height();
-  let x = 0;
-  let y = 0;
-  let size = h;
-  if (w > h) {
-    size = w;
-    y = (w - h) / 2;
-  } else {
-    size = h;
-    x = (h - w) / 2;
-  }
-  const newImg = images(size, size)
-    .fill(255, 255, 255)
-    .draw(img, x, y);
-  if (MAX_SIZE > 0 && size > MAX_SIZE) {
-    newImg.resize(MAX_SIZE);
-  }
-  const b = newImg.encode("jpg");
-  const newFilename = path.parse(filename).name + ".jpg";
-  const savePath = path.resolve(__dirname, OUTPUT, newFilename);
+  // let x = 0;
+  // let y = 0;
+  // let size = h;
+  // if (w > h) {
+  //   size = w;
+  //   y = (w - h) / 2;
+  // } else {
+  //   size = h;
+  //   x = (h - w) / 2;
+  // }
+  const b = images(filePath).draw(img, 0, 0).size(MAX_SIZE).encode("jpg")
+    // .fill(255, 255, 255)
+    // .draw(img, x, y);
+  // if (MAX_SIZE > 0 && size > MAX_SIZE) {
+  //   newImg.resize(MAX_SIZE);
+  // }
+  // const b = newImg.encode("jpg");
+  const {name, dir} = path.parse( filename );
+  const newFilename = name + ".jpg";
+  const savePath = path.resolve( __dirname, OUTPUT, dir, newFilename );
   if (fs.existsSync(savePath)) {
     consola.info(`${newFilename}文件已存在，跳过${filename}的压缩！`);
     run();
