@@ -1,67 +1,69 @@
-const request  = require('request');
 const consola = require('consola');
 const schedule = require("node-schedule");
 const user = require("./user");
-const domain = "https://sttlink.net"
+const axios = require("axios");
+const domain = "https://sttlink.net";
+const instance = axios.create({
+  timeout: 10000,
+  withCredentials: true
+})
+
 class Checkin {
   constructor(email, passwd, token) {
     this.email = email;
     this.passwd = passwd;
     this.token = token;
   }
-  run() {
-    request.post(domain + "/auth/login", {
-      json: {
+
+  async run() {
+    try {
+      const {data, headers} = await instance.post(domain + "/auth/login", {
         email: this.email,
         passwd: this.passwd
-      }
-    },  (err, res, body) => {
-      if (!err) {
-        consola.success(body);
-        if(body.ret === 1) {
-          this.checkin(res.headers["set-cookie"])
-        } else {
-          this.push("登录失败", body);
-        }
+      })
+      if (data.ret === 1) {
+        await this.checkin(headers["set-cookie"])
       } else {
-        consola.error(err);
-        this.push("登录失败", err);
+        throw new Error(data.msg);
       }
-    })
+    } catch (e) {
+      this.push("签到失败", e.message);
+      consola.error(e);
+    }
   }
-  checkin(cookies) {
-    request.post(domain + "/user/checkin", {
+
+  async checkin(Cookie) {
+    const {data} = await instance.post(domain + "/user/checkin", {}, {
       headers: {
-        "Cookie": cookies
-      }
-    },  (err, res, body) =>{
-      if (!err) {
-        body = JSON.parse(body)
-        consola.success(body)
-        this.push("签到结果",body.msg);
-      } else {
-        consola.error(err);
+        Cookie
       }
     })
+    console.info(data);
+    if (data.ret === 1) {
+      this.push("签到成功", data.msg);
+    } else {
+      throw new Error(data.msg);
+    }
   }
+
   push(title, content) {
-    if(!this.token) return;
-    consola.start("开始推送")
-    request.post(`http://pushplus.hxtrip.com/send`, {
-      json: {
-        token: this.token,
-        title,
-        content,
-        template: "json"
-      }
-    }, function (err, res, body) {
-      if (!err) {
-        consola.success(body)
-      }
+    if (!this.token) return;
+    consola.start("开始推送");
+    instance.post("http://pushplus.hxtrip.com/send", {
+      token: this.token,
+      title,
+      content,
+      template: "json"
+    }).then(res => {
+      consola.success(res.data)
+    }).catch(err => {
+      consola.error(err)
     })
   }
 }
+
 const userMap = new Map();
+
 function createCheckin(email, passwd, token) {
   if (userMap.get(email)) {
     return userMap.get(email);
@@ -79,6 +81,7 @@ function run() {
     createCheckin(item.email, item.passwd, item.token || "").run();
   })
 }
+
 // * * * * * *
 // 秒、分、时、日、月、周几
 schedule.scheduleJob("30 5 0 * * *", () => {
