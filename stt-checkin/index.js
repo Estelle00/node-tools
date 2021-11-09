@@ -1,7 +1,8 @@
 const request  = require('request');
 const consola = require('consola');
 const schedule = require("node-schedule");
-const user = require("./user")
+const user = require("./user");
+const domain = "https://sttlink.net"
 class Checkin {
   constructor(email, passwd, token) {
     this.email = email;
@@ -9,7 +10,7 @@ class Checkin {
     this.token = token;
   }
   run() {
-    request.post("https://sttlink.com/auth/login", {
+    request.post(domain + "/auth/login", {
       json: {
         email: this.email,
         passwd: this.passwd
@@ -22,11 +23,14 @@ class Checkin {
         } else {
           this.push("登录失败", body);
         }
+      } else {
+        consola.error(err);
+        this.push("登录失败", err);
       }
     })
   }
   checkin(cookies) {
-    request.post("https://sttlink.com/user/checkin", {
+    request.post(domain + "/user/checkin", {
       headers: {
         "Cookie": cookies
       }
@@ -35,6 +39,8 @@ class Checkin {
         body = JSON.parse(body)
         consola.success(body)
         this.push("签到结果",body.msg);
+      } else {
+        consola.error(err);
       }
     })
   }
@@ -64,11 +70,18 @@ function createCheckin(email, passwd, token) {
   userMap.set(email, c);
   return c;
 }
-// * * * * * *
-// 秒、分、时、日、月、周几
-schedule.scheduleJob("30 5 0 * * *", () => {
+
+console.log("服务开启");
+
+function run() {
   consola.info("执行时间：" + new Date())
   user.forEach(item => {
     createCheckin(item.email, item.passwd, item.token || "").run();
   })
+}
+// * * * * * *
+// 秒、分、时、日、月、周几
+schedule.scheduleJob("30 5 0 * * *", () => {
+  run()
 })
+run()
